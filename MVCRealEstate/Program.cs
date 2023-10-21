@@ -1,7 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using MVCRealEstateData;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<AppDbContext>(config => {
+    config.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
+});
+
 
 var app = builder.Build();
 

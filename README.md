@@ -8,3 +8,5 @@
 - Specification
 - Post
 - PostImages
+- Province
+- District
