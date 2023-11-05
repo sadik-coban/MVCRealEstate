@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MVCRealEstate.Models;
 using MVCRealEstateData;
 using NETCore.MailKit.Core;
+using System.Security.Claims;
 
 namespace MVCRealEstate.Controllers
 {
@@ -26,6 +27,13 @@ namespace MVCRealEstate.Controllers
             this.emailService = emailService;
             this.env = env;
         }
+
+
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
 
         public IActionResult Login()
         {
@@ -74,7 +82,6 @@ namespace MVCRealEstate.Controllers
             return RedirectToAction("Index", "Home", new { area = "" });
         }
 
-
         public IActionResult Register()
         {
             return View();
@@ -93,7 +100,15 @@ namespace MVCRealEstate.Controllers
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
+                var claims = new[]
+                {
+                    new Claim(ClaimTypes.GivenName, user.Name),
+                };
+
+
                 await userManager.AddToRoleAsync(user, "Members");
+                await userManager.AddClaimsAsync(user, claims);
+
                 var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
                 var url = Url.Action(nameof(ConfirmEmail), "Account", new { id = user.Id, token }, Request.Scheme);
                 var body = string.Format(
@@ -103,15 +118,69 @@ namespace MVCRealEstate.Controllers
                 emailService.Send(model.UserName, "MVCRE E-Posta Doğrulama Mesajı", body, isHtml: true);
                 return View("RegisterSuccess");
             }
-            return View();
+            else
+            {
+                result.Errors.ToList().ForEach(e => ModelState.AddModelError("", e.Description));
+                return View(model);
+            }
         }
 
+        
         public async Task<IActionResult> ConfirmEmail(Guid id, string token)
         {
             var user = await userManager.FindByIdAsync(id.ToString());
             var result = await userManager.ConfirmEmailAsync(user, token);
-            
+            if (result.Succeeded)
+            {
+                await signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction("Index", "Home");
+            }
+            else
+                return View("EmailConfirmFailed");
+        }
+
+        public async Task<IActionResult> VerifyEmail(string userName)
+        {
+            var user = await userManager.FindByNameAsync(userName);
+            return Json(user is not null ? $"{userName} zaten kullanımdadır" : "true");
+        }
+
+        public IActionResult ResetPassword()
+        {
             return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            var user = await userManager.FindByNameAsync(model.UserName);
+            if (user is null)
+            {
+                ModelState.AddModelError("", "Kullanıcı bulunamadı");
+                return View(model);
+            }
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var url = Url.Action(nameof(CreateNewPassword), "Account", new { id = user.Id, token }, Request.Scheme);
+            var body = string.Format(
+                System.IO.File.ReadAllText(Path.Combine(env.WebRootPath, "templates", "resetpassword.html")),
+                user.Name,
+                url);
+            emailService.Send(model.UserName, "MVCRE Parola Yenileme Mesajı", body, isHtml: true);
+
+            return View("ResetPasswordSuccess");
+        }
+
+        public IActionResult CreateNewPassword(Guid id, string token)
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateNewPassword(CreateNewPasswordViewModel model)
+        {
+            var user = await userManager.FindByIdAsync(model.Id.ToString());
+            await userManager.ResetPasswordAsync(user!, model.Token, model.NewPassword);
+            return RedirectToAction(nameof(Login));
         }
     }
 }

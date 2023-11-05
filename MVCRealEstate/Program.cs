@@ -33,7 +33,9 @@ builder.Services.AddIdentity<User, Role>(config =>
 
 })
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddErrorDescriber<AppIdentityErrorDescriber>();
+
 builder
     .Services
     .AddMailKit(optionBuilder =>

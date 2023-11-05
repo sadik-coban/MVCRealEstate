@@ -29,8 +29,8 @@
                 </div>
                 <hr />
                 <div class="py-3 d-flex gap-3 justify-content-center">
-                    <a href="#">Yeni Üyelik</a>
-                    <a href="#">Parolamı Yenile</a>
+                    <a asp-action="Register">Yeni Üyelik</a>
+                    <a asp-action="ResetPassword">Parolamı Yenile</a>
                 </div>
                 @if (!ViewContext.ModelState.IsValid)
                 {

@@ -13,6 +13,8 @@ public class User : IdentityUser<Guid>
 }
 
 
+
+
 public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)

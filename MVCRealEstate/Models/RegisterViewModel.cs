@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace MVCRealEstate.Models;
 
@@ -6,6 +7,7 @@ public class RegisterViewModel
 {
     [Display(Name = "E-Posta")]
     [Required(ErrorMessage = "{0} alanı boş bırakılamaz!")]
+    [Remote(action: "VerifyEmail", controller: "Account", ErrorMessage = "{0} zaten kullanımdadır!")]
     [DataType(DataType.EmailAddress, ErrorMessage = "Lütfen geçerli bir e-posta yazınız")]
     public string UserName { get; set; }
 
