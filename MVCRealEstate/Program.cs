@@ -13,6 +13,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
+    config.UseLazyLoadingProxies();
     config.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
 });
 

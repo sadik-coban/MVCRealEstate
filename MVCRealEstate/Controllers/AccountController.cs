@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVCRealEstate.Models;
 using MVCRealEstateData;
 using NETCore.MailKit.Core;
@@ -10,18 +11,21 @@ namespace MVCRealEstate.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly AppDbContext context;
         private readonly SignInManager<User> signInManager;
         private readonly UserManager<User> userManager;
         private readonly IEmailService emailService;
         private readonly IWebHostEnvironment env;
 
         public AccountController(
+            AppDbContext context,
             SignInManager<User> signInManager,
             UserManager<User> userManager,
             IEmailService emailService,
             IWebHostEnvironment env
             )
         {
+            this.context = context;
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.emailService = emailService;
@@ -125,7 +129,7 @@ namespace MVCRealEstate.Controllers
             }
         }
 
-        
+
         public async Task<IActionResult> ConfirmEmail(Guid id, string token)
         {
             var user = await userManager.FindByIdAsync(id.ToString());
@@ -182,5 +186,46 @@ namespace MVCRealEstate.Controllers
             await userManager.ResetPasswordAsync(user!, model.Token, model.NewPassword);
             return RedirectToAction(nameof(Login));
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Posts()
+        {
+            return View();
+        }
+
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> CreatePost()
+        {
+            ViewBag.Categories = new SelectList(context.Categories, "Id", "Name");
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> CreatePost(PostViewModel model)
+        {
+            //TODO: Image Resize and Use S3 storage
+
+            context.Posts.Add(new Post
+            {
+                CategoryId = model.CategoryId,
+                Name = model.Name,
+                Date = DateTime.UtcNow,
+                Descriptions = model.Descriptions,
+                DistrictId = model.DistrictId,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
+                Price = model.Price,
+                Type = (PostTypes)model.Type,
+                UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+                
+            });
+            ViewBag.Categories = new SelectList(context.Categories, "Id", "Name");
+            return View();
+        }
+
     }
 }
