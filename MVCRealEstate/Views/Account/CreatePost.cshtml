@@ -1,12 +1,11 @@
 ﻿@model PostViewModel
 @{
     ViewData["Title"] = "Yeni İlan Ekleme";
-
 }
 
 <h2>@ViewData["Title"]</h2>
-<div ng-app="cascadeDistrictApp" ng-controller="ctrl" ng-init="init()">
-    <form>
+<form method="post" enctype="multipart/form-data">
+    <div ng-app="cascadeDistrictApp" ng-controller="ctrl" ng-init="init()">
         <div class="mb-3">
             <label asp-for="Name"></label>
             <input class="form-control" asp-for="Name" />
@@ -23,7 +22,8 @@
                 <select id="Provinces" class="form-select" ng-change="getDistricts()" ng-model="selectedProvince" ng-options="province as province.name for province in provinces">
                     <option value="">[Seçiniz]</option>
                 </select>
-                <select class="form-select" asp-for="DistrictId" ng-model="selectedDistrict" ng-options="district as district.name for district in districts"></select>
+                <select class="form-select" ng-model="selectedDistrict" ng-change="setDistrict()" ng-options="district as district.name for district in districts"></select>
+                <input type="hidden" name="DistrictId" id="DistrictId" />
             </div>
             <span asp-validation-for="DistrictId"></span>
         </div>
@@ -44,10 +44,23 @@
             <input class="form-control" asp-for="Price" />
             <span asp-validation-for="Price"></span>
         </div>
+        <div class="mb-3 col-12 col-lg-12">
+            <div class="row row-cols-1 row-cols-lg-4 g-2">
+                @foreach (var spec in ViewBag.Specs as IEnumerable<Specification>)
+                {
+                    <div class="col">
+                        <input type="checkbox" name="Specs" value="@spec.Id" /> @spec.Name
+                    </div>
+                }
+            </div>
+        </div>
         <div class="mb-3 col-12 col-lg-4">
-            <label asp-for="Price"></label>
+            <label asp-for="ImageFile"></label>
             <input class="form-control" type="file" accept="image/*" asp-for="ImageFile" />
-            <span asp-validation-for="Price"></span>
+        </div>
+        <div class="mb-3 col-12 col-lg-4">
+            <label asp-for="ImageFiles"></label>
+            <input class="form-control" type="file" multiple accept="image/*" asp-for="ImageFiles" />
         </div>
         <div class="mb-3 col-12 col-lg-4">
             <label asp-for="Longitude"></label>
@@ -61,11 +74,13 @@
         </div>
         <div id="map" style="height: 400px;"></div>
         <hr />
-        <button type="submit">Kaydet</button>
-    </form>
-    
-</div>
+        <div class="py-4">
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </div>
+</form>
 @section scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACVMXgnUNSxEoyCxsXtdcKc3kC1xMFCPk&callback=initMap&v=weekly"
             defer></script>
     <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
@@ -116,19 +131,10 @@
                         });
                 }
 
-            });
+                $scope.setDistrict = () => {
+                    $('#DistrictId').val($scope.selectedDistrict.id);
+                }
 
-                            //$(() => {
-                            //    $('#Provinces').on('change', (e) => {
-                            //        let id = $('#Provinces').val();
-                            //        $.get(`/home/getdistricts/${id}`)
-                            //            .then((response) => {
-                            //                $('#DistrictId').html('');
-                            //                for (let i in response) {
-                            //                    $('#DistrictId').append(`<option id="${response[i].id}">${response[i].name}</option>`)
-                            //                }
-                            //            });
-                            //    });
-                            //});
+            });
     </script>
 }

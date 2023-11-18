@@ -2,14 +2,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using MVCRealEstate.Models;
 using MVCRealEstateData;
 using NETCore.MailKit.Core;
 using System.Security.Claims;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace MVCRealEstate.Controllers
 {
-    public class AccountController : Controller
+    public class AccountController : MVCRealEsateController
     {
         private readonly AppDbContext context;
         private readonly SignInManager<User> signInManager;
@@ -191,15 +194,21 @@ namespace MVCRealEstate.Controllers
         [Authorize]
         public async Task<IActionResult> Posts()
         {
-            return View();
-        }
+            var model = await context
+                .Posts
+                .Where(p => p.UserId == UserId)
+                .OrderByDescending(p => p.Date)
+                .ToListAsync();
+            return View(model);
 
+        }
 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> CreatePost()
         {
-            ViewBag.Categories = new SelectList(context.Categories, "Id", "Name");
+            ViewBag.Categories = new SelectList(await context.Categories.ToListAsync(), "Id", "Name");
+            ViewBag.Specs = await context.Specifications.ToListAsync();
             return View();
         }
 
@@ -207,9 +216,7 @@ namespace MVCRealEstate.Controllers
         [Authorize]
         public async Task<IActionResult> CreatePost(PostViewModel model)
         {
-            //TODO: Image Resize and Use S3 storage
-
-            context.Posts.Add(new Post
+            var post = new Post
             {
                 CategoryId = model.CategoryId,
                 Name = model.Name,
@@ -220,11 +227,46 @@ namespace MVCRealEstate.Controllers
                 Longitude = model.Longitude,
                 Price = model.Price,
                 Type = (PostTypes)model.Type,
-                UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
-                
-            });
+                UserId = UserId,
+            };
+
+            if (model.ImageFile is not null)
+            {
+                var image = await Image.LoadAsync(model.ImageFile.OpenReadStream());
+
+                image.Mutate(p => p.Resize(new ResizeOptions
+                {
+                    Size = new Size(800, 600),
+                    Mode = ResizeMode.Pad
+                }));
+                post.Image = image.ToBase64String(JpegFormat.Instance);
+            }
+
+            if (model.ImageFiles is not null)
+            {
+                foreach (var file in model.ImageFiles)
+                {
+                    var image = await Image.LoadAsync(file.OpenReadStream());
+
+                    image.Mutate(p => p.Resize(new ResizeOptions
+                    {
+                        Size = new Size(800, 600),
+                        Mode = ResizeMode.Pad
+                    }));
+                    post.PostImages.Add(new PostImage { Image = image.ToBase64String(JpegFormat.Instance) });
+                }
+            }
+
+            if (model.Specs is not null)
+            {
+                post.Specifications = await context.Specifications.Where(p => model.Specs.Any(q => q == p.Id)).ToListAsync();
+            }
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
             ViewBag.Categories = new SelectList(context.Categories, "Id", "Name");
-            return View();
+            return RedirectToAction(nameof(Posts));
         }
 
     }

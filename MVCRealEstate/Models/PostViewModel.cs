@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MVCRealEstate.Models;
 
-public enum PostTypesView 
+public enum PostTypesView
 {
     [Display(Name = "Satılık")] ForSale, [Display(Name = "Kiralık")] ForRent
 }
@@ -38,6 +38,12 @@ public class PostViewModel
 
     [Display(Name = "Görsel")]
     public IFormFile ImageFile { get; set; }
+
+    [Display(Name = "Foto Galeri")]
+    public IEnumerable<IFormFile> ImageFiles { get; set; }
+
+    [Display(Name = "Özellikler")]
+    public IEnumerable<Guid> Specs { get; set; }
 
     public DateTime Date { get; set; }
 

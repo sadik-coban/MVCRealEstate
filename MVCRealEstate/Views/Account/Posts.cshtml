@@ -1,4 +1,5 @@
-﻿@{
+﻿@model IEnumerable<Post>
+@{
     ViewData["Title"] = "İlanlarım";
 }
 
@@ -13,4 +14,33 @@
 </div>
 
 <table class="table">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Görsel</th>
+            <th>Başlık</th>
+            <th>Fiyat</th>
+            <th>Kategori</th>
+            <th>Tür</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var post in Model)
+        {
+            <tr>
+                <td>@post.Date.ToShortDateString()</td>
+                <td>
+                    <img src="@post.Image" height="80" />
+                </td>
+                <td>
+                    @post.Name
+                </td>
+                <td>
+                    @post.Price.ToString("c0");
+                </td>
+                <td>@post.Category!.Name</td>
+                <td>...</td>
+            </tr>
+        }
+    </tbody>
 </table>
