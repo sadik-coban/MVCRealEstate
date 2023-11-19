@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MVCRealEstate.Models;
@@ -20,9 +21,11 @@ public class HomeController : Controller
         this.context = context;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-
+        ViewBag.Categories = new SelectList(await context.Categories.ToListAsync(), "Id", "Name");
+        ViewBag.Districts = new SelectList(await context.Districts.Select(p=> new { p.Id, p.Name, ProvinceName = p.Province.Name }).ToListAsync(), "Id", "Name", null, "ProvinceName");
+        ViewBag.Latest = await context.Posts.OrderByDescending(p => p.Date).Take(20).ToListAsync();
         return View();
     }
 

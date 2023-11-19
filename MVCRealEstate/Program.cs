@@ -5,6 +5,7 @@ using MailKit.Net;
 using NETCore.MailKit.Extensions;
 using NETCore.MailKit.Infrastructure.Internal;
 using Microsoft.AspNetCore.Identity;
+using MVCRealEstate.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,10 @@ builder
             Security = builder.Configuration.GetValue<bool>("EMail:SSL")
         });
     });
+
+builder
+    .Services
+    .AddScoped<IStorageService, StorageService>();
 
 var app = builder.Build();
 

@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MVCRealEstate.Models;
+using MVCRealEstate.Services;
 using MVCRealEstateData;
 using NETCore.MailKit.Core;
+using System.Data;
 using System.Security.Claims;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace MVCRealEstate.Controllers
 {
@@ -19,13 +19,15 @@ namespace MVCRealEstate.Controllers
         private readonly UserManager<User> userManager;
         private readonly IEmailService emailService;
         private readonly IWebHostEnvironment env;
+        private readonly IStorageService storageService;
 
         public AccountController(
             AppDbContext context,
             SignInManager<User> signInManager,
             UserManager<User> userManager,
             IEmailService emailService,
-            IWebHostEnvironment env
+            IWebHostEnvironment env,
+            IStorageService storageService
             )
         {
             this.context = context;
@@ -33,6 +35,7 @@ namespace MVCRealEstate.Controllers
             this.userManager = userManager;
             this.emailService = emailService;
             this.env = env;
+            this.storageService = storageService;
         }
 
 
@@ -230,42 +233,32 @@ namespace MVCRealEstate.Controllers
                 UserId = UserId,
             };
 
-            if (model.ImageFile is not null)
+            post.Image = await storageService.UploadAsync(model.ImageFile?.OpenReadStream());
+
+            model.ImageFiles?.ToList().ForEach(async file => post.PostImages.Add(new PostImage
             {
-                var image = await Image.LoadAsync(model.ImageFile.OpenReadStream());
+                Image = await storageService.UploadAsync(file.OpenReadStream())
+            }));
 
-                image.Mutate(p => p.Resize(new ResizeOptions
-                {
-                    Size = new Size(800, 600),
-                    Mode = ResizeMode.Pad
-                }));
-                post.Image = image.ToBase64String(JpegFormat.Instance);
-            }
-
-            if (model.ImageFiles is not null)
-            {
-                foreach (var file in model.ImageFiles)
-                {
-                    var image = await Image.LoadAsync(file.OpenReadStream());
-
-                    image.Mutate(p => p.Resize(new ResizeOptions
-                    {
-                        Size = new Size(800, 600),
-                        Mode = ResizeMode.Pad
-                    }));
-                    post.PostImages.Add(new PostImage { Image = image.ToBase64String(JpegFormat.Instance) });
-                }
-            }
 
             if (model.Specs is not null)
-            {
                 post.Specifications = await context.Specifications.Where(p => model.Specs.Any(q => q == p.Id)).ToListAsync();
-            }
 
             context.Posts.Add(post);
-            await context.SaveChangesAsync();
 
+            await context.SaveChangesAsync();
             ViewBag.Categories = new SelectList(context.Categories, "Id", "Name");
+            return RedirectToAction(nameof(Posts));
+
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Remove(Guid id)
+        {
+            var post = await context.Posts.FindAsync(id);
+            context.Posts.Remove(post);
+            await context.SaveChangesAsync();
             return RedirectToAction(nameof(Posts));
         }
 
