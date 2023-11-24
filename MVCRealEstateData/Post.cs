@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace MVCRealEstateData;
 
 public enum PostTypes
 {
-    ForSale, ForRent
+    [Display(Name = "Satılık")]ForSale, [Display(Name = "Kiralık")]ForRent
 }
 
 public class Post

@@ -3,3 +3,10 @@
     padding: 0;
     margin-bottom: 0;
 }
+
+.form-panel {
+    background-image : url(/images/city.jpg);
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 240px;
+}

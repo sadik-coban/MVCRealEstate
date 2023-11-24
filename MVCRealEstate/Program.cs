@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using MVCRealEstate;
 using MVCRealEstateData;
+using MailKit.Net;
+using NETCore.MailKit.Extensions;
+using NETCore.MailKit.Infrastructure.Internal;
+using Microsoft.AspNetCore.Identity;
+using MVCRealEstate.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +14,15 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
+    config.UseLazyLoadingProxies();
     config.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
 });
+
 
 builder.Services.AddIdentity<User, Role>(config =>
 {
     config.SignIn.RequireConfirmedEmail = true;
-
+    config.User.RequireUniqueEmail = true;
     config.Password.RequireDigit = builder.Configuration.GetValue<bool>("Security:Password:RequireDigit");
     config.Password.RequiredLength = builder.Configuration.GetValue<int>("Security:Password:RequiredLength");
     config.Password.RequiredUniqueChars = builder.Configuration.GetValue<int>("Security:Password:RequiredUniqueChars");
@@ -25,9 +32,35 @@ builder.Services.AddIdentity<User, Role>(config =>
 
     config.Lockout.MaxFailedAccessAttempts = builder.Configuration.GetValue<int>("Security:Lockout:MaxFailedAccessAttempts");
     config.Lockout.DefaultLockoutTimeSpan = builder.Configuration.GetValue<TimeSpan>("Security:Lockout:DefaultLockoutTimeSpan");
-})
-    .AddEntityFrameworkStores<AppDbContext>();
 
+})
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders()
+    .AddErrorDescriber<AppIdentityErrorDescriber>();
+
+builder
+    .Services
+    .AddMailKit(optionBuilder =>
+    {
+        optionBuilder.UseMailKit(new MailKitOptions()
+        {
+            //get options from sercets.json
+            Server = builder.Configuration["EMail:Server"],
+            Port = builder.Configuration.GetValue<int>("EMail:Port"),
+            SenderName = builder.Configuration["EMail:SenderName"],
+            SenderEmail = builder.Configuration["EMail:SenderEmail"],
+
+            // can be optional with no authentication 
+            Account = builder.Configuration["EMail:Account"],
+            Password = builder.Configuration["EMail:Password"],
+            // enable ssl or tls
+            Security = builder.Configuration.GetValue<bool>("EMail:SSL")
+        });
+    });
+
+builder
+    .Services
+    .AddScoped<IStorageService, StorageService>();
 
 var app = builder.Build();
 
