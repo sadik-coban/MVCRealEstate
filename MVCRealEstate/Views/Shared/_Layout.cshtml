@@ -95,5 +95,23 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        $(() => {
+            var absolutePage = 1;
+            var active = false;
+            $(window).on('scroll', (e) => {
+                console.log($(window).scrollTop());
+                if (!active && $(window).scrollTop() >= $(window).height() - 200) {
+                    active = true;
+                    $.get(`/home/postsbypage/?page=${++absolutePage}`)
+                        .then((response) => {
+                            console.log(response)
+                            active = false;
+                        });
+                }
+            });
+        })
+    </script>
 </body>
 </html>

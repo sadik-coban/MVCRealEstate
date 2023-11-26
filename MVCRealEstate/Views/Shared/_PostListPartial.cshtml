@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<Post>
 
-<div class="row row-cols-1 row-cols-lg-4">
+<div class="row row-cols-1 row-cols-lg-4 g-4 lazy">
     @foreach (var post in Model)
     {
         <partial name="_PostBoxPartial" model="post" />
