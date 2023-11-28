@@ -1,0 +1,8 @@
+﻿@model IEnumerable<Post>
+@{
+    ViewData["Title"] = "Arama Sonuçları";
+}
+
+<h2 class="border-bottom">@ViewData["Title"]</h2>
+
+<partial name="_PostListPartial" model="Model" />

@@ -27,10 +27,10 @@ public class CategoryEntityTypeConfiguration : IEntityTypeConfiguration<Category
             .IsRequired();
 
         builder
-            .HasMany(p=>p.Posts)
-            .WithOne(p=>p.Category)
-            .HasForeignKey(p=>p.CategoryId)
+            .HasMany(p => p.Posts)
+            .WithOne(p => p.Category)
+            .HasForeignKey(p => p.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
-
     }
+
 }

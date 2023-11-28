@@ -24,7 +24,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         ViewBag.Categories = new SelectList(await context.Categories.ToListAsync(), "Id", "Name");
-        ViewBag.Districts = new SelectList(await context.Districts.Select(p=> new { p.Id, p.Name, ProvinceName = p.Province.Name }).ToListAsync(), "Id", "Name", null, "ProvinceName");
+        ViewBag.Districts = new SelectList(await context.Districts.Select(p => new { p.Id, p.Name, ProvinceName = p.Province.Name }).ToListAsync(), "Id", "Name", null, "ProvinceName");
         ViewBag.Latest = await context.Posts.OrderByDescending(p => p.Date).Take(20).ToListAsync();
         return View();
     }
@@ -63,7 +63,22 @@ public class HomeController : Controller
             .ToListAsync();
         return Json(model);
     }
+    [HttpGet]
 
+    public async Task<IActionResult> Search(SearchViewModel model)
+
+    {
+        var result = await context
+            .Posts
+            .Where(p =>
+            (p.DistrictId == model.DistrictId || model.DistrictId == null) &&
+            (p.Price >= model.MinPrice || model.MinPrice == null) &&
+            (p.Price <= model.MaxPrice || model.MaxPrice == null) &&
+            (p.CategoryId == model.CategoryId || model.CategoryId == null) &&
+            (p.Type == model.PostType || model.PostType == null)
+            ).ToListAsync();
+        return View(result);
+    }
 
 }
 

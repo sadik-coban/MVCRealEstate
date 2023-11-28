@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MVCRealEstateData;
+using System.Security.Claims;
 
 namespace MVCRealEstate;
 
@@ -28,8 +29,17 @@ public static class AppExtensions
             EmailConfirmed = true
         };
 
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.GivenName, user.Name),
+        };
+
+
+
         userManager.CreateAsync(user, configuration.GetValue<string>("Security:DefaultUser:Password")).Wait(); ;
         userManager.AddToRoleAsync(user, "Administrators").Wait();
+        userManager.AddClaimsAsync(user, claims).Wait();
+
 
 
         return builder;
