@@ -23,11 +23,12 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        ViewBag.Categories = new SelectList(await context.Categories.ToListAsync(), "Id", "Name");
-        ViewBag.Districts = new SelectList(await context.Districts.Select(p => new { p.Id, p.Name, ProvinceName = p.Province.Name }).ToListAsync(), "Id", "Name", null, "ProvinceName");
+        await PopulateDropdowns();
         ViewBag.Latest = await context.Posts.OrderByDescending(p => p.Date).Take(20).ToListAsync();
         return View();
     }
+
+
 
     public IActionResult Privacy()
     {
@@ -54,8 +55,6 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> GetDistricts(int id)
     {
-
-
         var model = await context
             .Districts
             .Where(p => p.ProvinceId == id)
@@ -65,9 +64,10 @@ public class HomeController : Controller
     }
     [HttpGet]
 
+    [HttpGet]
     public async Task<IActionResult> Search(SearchViewModel model)
-
     {
+        await PopulateDropdowns();
         var result = await context
             .Posts
             .Where(p =>
@@ -76,9 +76,30 @@ public class HomeController : Controller
             (p.Price <= model.MaxPrice || model.MaxPrice == null) &&
             (p.CategoryId == model.CategoryId || model.CategoryId == null) &&
             (p.Type == model.PostType || model.PostType == null)
-            ).ToListAsync();
+            )
+            .ToListAsync();
+        ViewBag.SearchModel = model;
         return View(result);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> PostsByPage(int page)
+    {
+        var results = await context
+            .Posts
+            .OrderByDescending(p => p.Date)
+            .Skip((page - 1) * 20)
+            .Take(20)
+            .Select(p => new { p.Id, p.Name, p.Descriptions, p.Price, p.Image })
+            .ToListAsync();
+
+        return Json(results);
+    }
+
+    private async Task PopulateDropdowns()
+    {
+        ViewBag.Categories = new SelectList(await context.Categories.ToListAsync(), "Id", "Name");
+        ViewBag.Districts = new SelectList(await context.Districts.Select(p => new { p.Id, p.Name, ProvinceName = p.Province.Name }).ToListAsync(), "Id", "Name", null, "ProvinceName");
+    }
 }
 
