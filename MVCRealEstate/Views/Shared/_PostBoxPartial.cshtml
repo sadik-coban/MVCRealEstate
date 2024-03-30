@@ -1,10 +1,11 @@
-﻿@model Post
+﻿@model GetPostViewModel
 <div class="col">
     <div class="card h-100">
         <img class="card-img-top" src="@(Model.Image ?? "/images/noimage.jpg")" />
         <div class="card-body">
             <h5 class="card-title">@Model.Name</h5>
             <p class="card-text">@Model.Price.ToString("c0")</p>
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Post" asp-route-id="@Model.Id">Ayrıntılar</a>
         </div>
     </div>
 </div>

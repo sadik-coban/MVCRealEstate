@@ -24,8 +24,16 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         await PopulateDropdowns();
-        ViewBag.Latest = await context.Posts.OrderByDescending(p => p.Date).Take(20).ToListAsync();
+        ViewBag.Latest = await context.Posts.OrderByDescending(p => p.Date).Select(p => new GetPostViewModel {
+            Id = p.Id,Name = p.Name,Image = p.Image, Price = p.Price
+        }).Take(20).ToListAsync();
         return View();
+    }
+
+    public async Task<IActionResult> Post(Guid id)
+    {
+        var post = await context.Posts.FindAsync(id);
+        return View(post);
     }
 
 
